@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 import { runSecurityAgent } from "@/lib/agents/security";
 import { runPerformanceAgent } from "@/lib/agents/performance";
 import { runStyleAgent } from "@/lib/agents/style";
@@ -24,15 +24,15 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }), {
+    return new Response(JSON.stringify({ error: "GROQ_API_KEY not configured" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = new Groq({ apiKey });
 
   // Set up SSE stream
   const encoder = new TextEncoder();

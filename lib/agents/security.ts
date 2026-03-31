@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 
 export const SECURITY_SYSTEM_PROMPT = `You are an expert security engineer performing a code review.
 Your ONLY job is to identify security vulnerabilities in the provided code diff.
@@ -33,17 +33,18 @@ Brief overall security assessment.
 If no issues found, state "No security vulnerabilities detected" with brief justification.`;
 
 export async function runSecurityAgent(
-  client: Anthropic,
+  client: Groq,
   diff: string,
   onChunk: (text: string) => void
 ): Promise<string> {
   let fullText = "";
 
-  const stream = await client.messages.stream({
-    model: "claude-opus-4-6",
+  const stream = await client.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
     max_tokens: 2048,
-    system: SECURITY_SYSTEM_PROMPT,
+    stream: true,
     messages: [
+      { role: "system", content: SECURITY_SYSTEM_PROMPT },
       {
         role: "user",
         content: `Please review the following code diff for security vulnerabilities:\n\n\`\`\`diff\n${diff}\n\`\`\``,
@@ -51,13 +52,11 @@ export async function runSecurityAgent(
     ],
   });
 
-  for await (const event of stream) {
-    if (
-      event.type === "content_block_delta" &&
-      event.delta.type === "text_delta"
-    ) {
-      fullText += event.delta.text;
-      onChunk(event.delta.text);
+  for await (const chunk of stream) {
+    const text = chunk.choices[0]?.delta?.content || "";
+    if (text) {
+      fullText += text;
+      onChunk(text);
     }
   }
 

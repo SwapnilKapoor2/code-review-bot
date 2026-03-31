@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 
 export const PERFORMANCE_SYSTEM_PROMPT = `You are an expert performance engineer performing a code review.
 Your ONLY job is to identify performance issues in the provided code diff.
@@ -33,17 +33,18 @@ Brief overall performance assessment.
 If no issues found, state "No performance issues detected" with brief justification.`;
 
 export async function runPerformanceAgent(
-  client: Anthropic,
+  client: Groq,
   diff: string,
   onChunk: (text: string) => void
 ): Promise<string> {
   let fullText = "";
 
-  const stream = await client.messages.stream({
-    model: "claude-opus-4-6",
+  const stream = await client.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
     max_tokens: 2048,
-    system: PERFORMANCE_SYSTEM_PROMPT,
+    stream: true,
     messages: [
+      { role: "system", content: PERFORMANCE_SYSTEM_PROMPT },
       {
         role: "user",
         content: `Please review the following code diff for performance issues:\n\n\`\`\`diff\n${diff}\n\`\`\``,
@@ -51,13 +52,11 @@ export async function runPerformanceAgent(
     ],
   });
 
-  for await (const event of stream) {
-    if (
-      event.type === "content_block_delta" &&
-      event.delta.type === "text_delta"
-    ) {
-      fullText += event.delta.text;
-      onChunk(event.delta.text);
+  for await (const chunk of stream) {
+    const text = chunk.choices[0]?.delta?.content || "";
+    if (text) {
+      fullText += text;
+      onChunk(text);
     }
   }
 

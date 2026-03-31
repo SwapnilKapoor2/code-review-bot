@@ -333,7 +333,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-gray-200 mt-16 py-4 text-center text-xs text-gray-400">
-        Built with Next.js + Claude Opus 4.6 · 3 Parallel Sub-Agents + 1 Master Orchestrator
+        Built with Next.js + Llama 3.3 70B via Groq · 3 Parallel Sub-Agents + 1 Master Orchestrator
       </footer>
     </div>
   );
