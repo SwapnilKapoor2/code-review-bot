@@ -4,6 +4,7 @@ import { useState } from "react";
 import ReviewForm from "@/components/ReviewForm";
 import AgentCard, { AgentStatus } from "@/components/AgentCard";
 import FinalReport from "@/components/FinalReport";
+import ReviewSummaryBanner from "@/components/ReviewSummaryBanner";
 
 interface AgentState {
   status: AgentStatus;
@@ -127,6 +128,12 @@ export default function Home() {
   const hasStarted = Object.values(agents).some((a) => a.status !== "idle" || a.content);
   const subAgentsActive = AGENTS_CONFIG.some((a) => agents[a.id].status === "running");
   const subAgentsDone   = AGENTS_CONFIG.every((a) => agents[a.id].status === "complete");
+
+  const securityLevel   = (agents.security.content.match(/\*\*Risk Level:\*\*\s*(\w+)/)    || [])[1] ?? "";
+  const performanceLevel= (agents.performance.content.match(/\*\*Impact Level:\*\*\s*(\w+)/)|| [])[1] ?? "";
+  const styleScore      = (agents.style.content.match(/\*\*Quality Score:\*\*\s*(\w+)/)     || [])[1] ?? "";
+  const verdictMatch    = agents.orchestrator.content.match(/\*\*(APPROVE[^*]*|REQUEST CHANGES[^*]*|REJECT[^*]*)\*\*/i);
+  const verdict         = verdictMatch ? verdictMatch[1].trim() : "";
 
   return (
     <div className="min-h-screen bg-[#f8f9fc]">
@@ -286,6 +293,16 @@ export default function Home() {
                   />
                 ))}
               </div>
+
+              {/* Summary banner — shown once all sub-agents complete */}
+              {subAgentsDone && securityLevel && performanceLevel && styleScore && (
+                <ReviewSummaryBanner
+                  securityLevel={securityLevel}
+                  performanceLevel={performanceLevel}
+                  styleScore={styleScore}
+                  verdict={verdict}
+                />
+              )}
 
               {/* Orchestrator separator */}
               {(agents.orchestrator.status !== "idle" || agents.orchestrator.content) && (
